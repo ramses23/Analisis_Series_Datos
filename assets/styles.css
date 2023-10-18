@@ -1,0 +1,54 @@
+/* Estilo general para la interfaz */
+body {
+    font-family: Arial, sans-serif;
+}
+
+.centered-text {
+    text-align: center;
+}
+
+/* Estilo para el título */
+#title-text {
+    color: red;
+}
+
+/* Estilo para el componente de carga de archivos */
+#upload-data {
+    margin: 20px 0;
+    padding: 10px;
+    border: 2px dashed #aaa;
+    border-radius: 10px;
+}
+
+/* Estilo para el mensaje de éxito de carga */
+.success-message {
+    color: green;
+    font-weight: bold;
+    margin: 10px 0;
+}
+
+/* Estilo para las etiquetas descriptivas */
+label {
+    display: block;
+    margin: 15px 0 5px;
+    font-weight: bold;
+}
+
+/* Estilo para los botones */
+button {
+    margin: 10px 5px;
+    padding: 10px 15px;
+    border-radius: 5px;
+    border: none;
+    cursor: pointer;
+}
+
+.primary-button {
+    background-color: #007BFF;
+    color: white;
+}
+
+/* Estilo para las gráficas */
+.graph-style {
+    margin: 20px 0;
+}
