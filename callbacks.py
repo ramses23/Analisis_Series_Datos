@@ -4,6 +4,18 @@ import mne
 from mne import EpochsArray
 import numpy as np
 from utils import decode_contents
+from mne.time_frequency import psd_array_multitaper
+
+def compute_psd_multitaper(raw, sfreq, t_ftimwin, tapsmofrq):
+    signal_data, _ = raw[:, :]  # Aquí extraemos los datos del objeto RawArray
+    result = psd_array_multitaper(signal_data[0], sfreq, fmin=0.0, fmax=50.0, bandwidth=tapsmofrq, adaptive=False)
+    print("Resultado de psd_array_multitaper:", result)  # Línea de depuración
+    psd, freqs = result  # Cambiamos esta línea para desempacar el resultado
+    return psd, freqs
+
+
+
+
 
 def register_callbacks(app):
 
@@ -119,3 +131,55 @@ def register_callbacks(app):
             return fig
 
         return {}
+
+    @app.callback(
+        [Output('psd-graph', 'figure'), Output('psd-db-graph', 'figure')],
+        [Input('psd-button', 'n_clicks')],
+        [State('upload-data', 'contents'),
+        State('column-dropdown', 'value'),
+        State('freq-input', 'value'),
+        State('mtm-timwin-input', 'value'),
+        State('mtm-tapsmofrq-input', 'value'),
+        State('wavelet-freq-min', 'value'),
+        State('wavelet-freq-max', 'value'),
+        State('unit-input', 'value')]
+    )
+    def update_psd_graph(n_clicks, contents, selected_column, freq_ms, mtm_timwin, mtm_tapsmofrq, freq_min, freq_max, unit):
+        if contents and selected_column:
+            decoded = decode_contents(contents)
+            signal_data = decoded[selected_column].values
+            signal_data = signal_data.reshape(1, -1)  # Reshape data to (1, n_samples)
+
+            # Create MNE Info object
+            info = mne.create_info(ch_names=['signal'], sfreq=freq_ms * 1000, ch_types=['eeg'])
+
+            # Create RawArray object
+            raw = mne.io.RawArray(signal_data, info)
+
+            # Compute PSD
+            freqs = np.arange(freq_min, freq_max, 1)
+            psd, freqs_psd = compute_psd_multitaper(raw, freq_ms * 1000, mtm_timwin, mtm_tapsmofrq)
+
+            
+            # Ajuste de unidades y título
+            y_label = f'Potencia ({unit}^2/Hz)'
+            psd_db = 10 * np.log10(psd)
+
+            # Gráfico de PSD en potencia
+            fig_power = go.Figure(data=go.Scatter(x=freqs_psd, y=psd, mode='lines'))
+            fig_power.update_layout(title='Espectro de Potencia',
+                                    xaxis_title='Frecuencia (Hz)',
+                                    yaxis_title=f'Potencia ({unit}^2/Hz)',
+                                    template="plotly_white")
+
+            # Gráfico de PSD en decibeles
+            fig_db = go.Figure(data=go.Scatter(x=freqs_psd, y=psd_db, mode='lines'))
+            fig_db.update_layout(title='Espectro de Potencia (Decibeles)',
+                                xaxis_title='Frecuencia (Hz)',
+                                yaxis_title='Decibeles (dB)',
+                                template="plotly_white")
+
+            return fig_power, fig_db
+
+        else:
+            return go.Figure(), go.Figure()
